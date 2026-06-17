@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Page Number ZIP Tool</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">HTML • CSS • JavaScript</p>
+        <h1>Image Page Number ZIP Tool</h1>
+        <p class="subtitle">
+          Upload multiple images, auto-sort them naturally by filename, reorder by hand,
+          add small page numbers at the top-right corner, then download all images as a ZIP file.
+        </p>
+      </div>
+
+      <div class="hero-card">
+        <span class="status-dot"></span>
+        <div>
+          <strong>Client-side only</strong>
+          <p>Your images are processed inside your browser. No server upload required.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel uploader-panel">
+      <label id="dropZone" class="drop-zone" for="imageInput">
+        <input
+          id="imageInput"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          hidden
+        />
+        <span class="upload-icon">⬆</span>
+        <strong>Click to upload images</strong>
+        <small>or drag and drop PNG, JPG, JPEG, WEBP files here</small>
+      </label>
+
+      <div class="toolbar">
+        <div class="stats">
+          <span id="imageCount">0 images</span>
+          <span id="sortStatus">Natural sort ready</span>
+        </div>
+
+        <div class="actions">
+          <button id="sortBtn" class="btn btn-secondary" type="button" disabled>
+            Natural Sort
+          </button>
+          <button id="clearBtn" class="btn btn-ghost" type="button" disabled>
+            Clear
+          </button>
+          <button id="downloadBtn" class="btn btn-primary" type="button" disabled>
+            Download ZIP
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="settings-grid">
+      <div class="panel setting-card">
+        <label for="startNumber">Start page number</label>
+        <input id="startNumber" type="number" min="0" value="1" />
+      </div>
+
+      <div class="panel setting-card">
+        <label for="fontSize">Number size</label>
+        <input id="fontSize" type="range" min="10" max="42" value="18" />
+        <span><output id="fontSizeLabel">18</output> px</span>
+      </div>
+
+      <div class="panel setting-card">
+        <label for="paddingSize">Corner padding</label>
+        <input id="paddingSize" type="range" min="4" max="50" value="14" />
+        <span><output id="paddingSizeLabel">14</output> px</span>
+      </div>
+
+      <div class="panel setting-card">
+        <label for="zipName">ZIP file name</label>
+        <input id="zipName" type="text" value="numbered-images.zip" />
+      </div>
+    </section>
+
+    <section class="panel preview-panel">
+      <div class="preview-header">
+        <div>
+          <h2>Preview</h2>
+          <p>Drag cards to reorder. Page numbers will update automatically.</p>
+        </div>
+        <span class="hint">Natural order: 1, 2, 3, 10, 11</span>
+      </div>
+
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">🖼️</div>
+        <h3>No images uploaded yet</h3>
+        <p>Upload one or more images to start numbering.</p>
+      </div>
+
+      <div id="imageGrid" class="image-grid" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <template id="imageCardTemplate">
+    <article class="image-card" draggable="true">
+      <div class="image-wrap">
+        <img alt="" />
+        <span class="page-badge"></span>
+      </div>
+      <div class="card-info">
+        <strong class="file-name"></strong>
+        <small class="file-meta"></small>
+      </div>
+    </article>
+  </template>
+
+  <!--
+    JSZip is used only to create the ZIP file in the browser.
+    For offline use on Kali, download jszip.min.js and replace this CDN script with:
+    <script src="vendor/jszip.min.js"></script>
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
