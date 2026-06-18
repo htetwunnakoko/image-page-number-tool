@@ -5,10 +5,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Page Number Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
+
+  <header class="mobile-appbar">
+    <div class="mobile-brand">
+      <div class="mobile-logo">PN</div>
+      <div>
+        <strong>Page Number Studio</strong>
+        <span id="mobileStatusText">Ready to upload</span>
+      </div>
+    </div>
+
+    <button id="mobileThemeBtn" class="mobile-icon-btn" type="button" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 2a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0 3a1 1 0 0 1-1-1v-1a1 1 0 1 1 2 0v1a1 1 0 0 1-1 1ZM4.22 5.64a1 1 0 0 1 1.42-1.42l.7.71a1 1 0 1 1-1.41 1.41l-.71-.7Zm13.44 13.43a1 1 0 0 1 1.41-1.41l.71.7a1 1 0 0 1-1.42 1.42l-.7-.71ZM2 12a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Zm17 1a1 1 0 1 1 0-2h1a1 1 0 1 1 0 2h-1ZM4.22 18.36l.71-.7a1 1 0 0 1 1.41 1.41l-.7.71a1 1 0 0 1-1.42-1.42ZM17.66 6.34a1 1 0 0 1 0-1.41l.7-.71a1 1 0 1 1 1.42 1.42l-.71.7a1 1 0 0 1-1.41 0Z" />
+      </svg>
+    </button>
+  </header>
+
   <div class="bg-orb orb-one"></div>
   <div class="bg-orb orb-two"></div>
 
@@ -77,6 +99,19 @@
             <option value="plain">Plain text only</option>
           </select>
         </label>
+        <label class="field">
+          <span>Page number position</span>
+          <select id="numberPosition">
+            <option value="top-right">Top Right</option>
+            <option value="top-left">Top Left</option>
+            <option value="bottom-right">Bottom Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="top-center">Top Center</option>
+            <option value="bottom-center">Bottom Center</option>
+            <option value="center">Center</option>
+          </select>
+        </label>
+
       </section>
 
       <section class="settings-card">
@@ -109,7 +144,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Client-side image numbering</p>
-          <h2>Upload, organise, preview, export.</h2>
+
         </div>
 
         <div class="top-actions">
@@ -130,7 +165,7 @@
           </div>
           <div>
             <h3>Drop images here</h3>
-            <p>or click to choose PNG, JPG, JPEG, WEBP files</p>
+            <p>Choose images or drag them here</p>
           </div>
         </div>
 
@@ -140,18 +175,18 @@
       <section class="info-strip">
         <div>
           <span class="dot green"></span>
-          <strong>Natural sorting</strong>
-          <p>1, 2, 3, 10, 11 order</p>
+          <strong>Natural sort</strong>
+          <p>1, 2, 3, 10, 11</p>
         </div>
         <div>
           <span class="dot purple"></span>
-          <strong>Manual reorder</strong>
-          <p>Drag image cards</p>
+          <strong>Drag reorder</strong>
+          <p>Drag or tap ↑ ↓</p>
         </div>
         <div>
           <span class="dot blue"></span>
-          <strong>Private processing</strong>
-          <p>No server upload</p>
+          <strong>Private</strong>
+          <p>Browser only</p>
         </div>
       </section>
 
@@ -171,7 +206,7 @@
             <span></span>
           </div>
           <h3>No images yet</h3>
-          <p>Upload one or more images. The app will sort them naturally by filename first.</p>
+          <p>Upload images first. They will appear here after sorting.</p>
         </div>
 
         <div id="imageGrid" class="image-grid" aria-live="polite"></div>
@@ -185,20 +220,37 @@
         <span></span><span></span><span></span><span></span>
       </div>
 
+      <button class="delete-image-btn" type="button" title="Remove image" aria-label="Remove image">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M9 3a1 1 0 0 0-1 1v1H5a1 1 0 1 0 0 2h.35l.86 12.08A3 3 0 0 0 9.2 22h5.6a3 3 0 0 0 2.99-2.92L18.65 7H19a1 1 0 1 0 0-2h-3V4a1 1 0 0 0-1-1H9Zm1 2h4v0h-4v0Zm-2.64 2h9.28l-.84 11.94a1 1 0 0 1-1 .94H9.2a1 1 0 0 1-1-.94L7.36 7ZM10 10a1 1 0 0 0-1 1v5a1 1 0 1 0 2 0v-5a1 1 0 0 0-1-1Zm4 0a1 1 0 0 0-1 1v5a1 1 0 1 0 2 0v-5a1 1 0 0 0-1-1Z" />
+        </svg>
+      </button>
+
       <div class="image-wrap">
         <img alt="" />
         <span class="page-badge"></span>
       </div>
 
       <div class="card-footer">
-        <div>
+        <div class="file-block">
           <strong class="file-name"></strong>
           <small class="file-meta"></small>
         </div>
-        <span class="order-number"></span>
+        <div class="card-tools" aria-label="Image order controls">
+          <button class="move-btn move-up" type="button" title="Move up" aria-label="Move image up">↑</button>
+          <button class="move-btn move-down" type="button" title="Move down" aria-label="Move image down">↓</button>
+          <span class="order-number"></span>
+        </div>
       </div>
     </article>
   </template>
+
+
+  <nav class="mobile-bottom-bar" aria-label="Mobile quick actions">
+    <button id="mobileSortBtn" class="mobile-action secondary" type="button" disabled>Sort</button>
+    <button id="mobileDownloadBtn" class="mobile-action primary" type="button" disabled>Download ZIP</button>
+  </nav>
 
   <div id="progressOverlay" class="progress-overlay" hidden>
     <div class="progress-card">

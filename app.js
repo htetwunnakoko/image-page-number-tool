@@ -12,6 +12,11 @@ const clearBtn = document.querySelector("#clearBtn");
 const downloadBtn = document.querySelector("#downloadBtn");
 const themeBtn = document.querySelector("#themeBtn");
 const themeLabel = document.querySelector("#themeLabel");
+const mobileUploadBtn = document.querySelector("#mobileUploadBtn");
+const mobileSortBtn = document.querySelector("#mobileSortBtn");
+const mobileDownloadBtn = document.querySelector("#mobileDownloadBtn");
+const mobileThemeBtn = document.querySelector("#mobileThemeBtn");
+const mobileStatusText = document.querySelector("#mobileStatusText");
 
 const startNumberInput = document.querySelector("#startNumber");
 const fontSizeInput = document.querySelector("#fontSize");
@@ -19,6 +24,7 @@ const fontSizeLabel = document.querySelector("#fontSizeLabel");
 const paddingSizeInput = document.querySelector("#paddingSize");
 const numberLanguage = document.querySelector("#numberLanguage");
 const badgeStyle = document.querySelector("#badgeStyle");
+const numberPosition = document.querySelector("#numberPosition");
 const zipNameInput = document.querySelector("#zipName");
 
 const progressOverlay = document.querySelector("#progressOverlay");
@@ -47,7 +53,8 @@ imageInput.addEventListener("change", (event) => {
 });
 
 dropZone.addEventListener("click", (event) => {
-  if (event.target.closest(".btn-upload") || event.currentTarget === dropZone) {
+  const clickedUploadArea = event.target === dropZone || event.target.closest(".drop-content, .btn-upload");
+  if (clickedUploadArea) {
     imageInput.click();
   }
 });
@@ -86,6 +93,7 @@ downloadBtn.addEventListener("click", async () => {
   await downloadZip();
 });
 
+
 themeBtn.addEventListener("click", () => {
   const html = document.documentElement;
   const nextTheme = html.dataset.theme === "dark" ? "light" : "dark";
@@ -94,7 +102,24 @@ themeBtn.addEventListener("click", () => {
   localStorage.setItem("pageNumberStudioTheme", nextTheme);
 });
 
-[startNumberInput, fontSizeInput, paddingSizeInput, numberLanguage, badgeStyle].forEach((input) => {
+
+mobileUploadBtn?.addEventListener("click", () => {
+  imageInput.click();
+});
+
+mobileSortBtn?.addEventListener("click", () => {
+  if (!sortBtn.disabled) sortBtn.click();
+});
+
+mobileDownloadBtn?.addEventListener("click", () => {
+  if (!downloadBtn.disabled) downloadBtn.click();
+});
+
+mobileThemeBtn?.addEventListener("click", () => {
+  themeBtn.click();
+});
+
+[startNumberInput, fontSizeInput, paddingSizeInput, numberLanguage, badgeStyle, numberPosition].forEach((input) => {
   input.addEventListener("input", () => {
     updateRangeLabels();
     renderPageNumbers();
@@ -116,7 +141,7 @@ function handleFiles(fileList) {
 
   const skippedCount = files.length - validFiles.length;
   const newImages = validFiles.map((file) => ({
-    id: crypto.randomUUID(),
+    id: createId(),
     file,
     name: file.name,
     size: file.size,
@@ -151,6 +176,9 @@ function render() {
     const fileName = card.querySelector(".file-name");
     const fileMeta = card.querySelector(".file-meta");
     const orderNumber = card.querySelector(".order-number");
+    const deleteButton = card.querySelector(".delete-image-btn");
+    const moveUpButton = card.querySelector(".move-up");
+    const moveDownButton = card.querySelector(".move-down");
 
     card.dataset.id = image.id;
     img.src = image.previewUrl;
@@ -164,6 +192,26 @@ function render() {
     card.addEventListener("dragend", handleDragEnd);
     card.addEventListener("dragover", handleDragOver);
     card.addEventListener("drop", handleDrop);
+
+    deleteButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      removeImage(image.id);
+    });
+
+    if (moveUpButton && moveDownButton) {
+      moveUpButton.disabled = index === 0;
+      moveDownButton.disabled = index === state.images.length - 1;
+
+      moveUpButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        moveImage(index, index - 1);
+      });
+
+      moveDownButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        moveImage(index, index + 1);
+      });
+    }
 
     imageGrid.appendChild(card);
   });
@@ -191,10 +239,25 @@ function applyBadgeStyles() {
   const size = Number.parseInt(fontSizeInput.value, 10) || 18;
   const padding = Number.parseInt(paddingSizeInput.value, 10) || 14;
   const style = badgeStyle.value;
+  const position = numberPosition?.value || "top-right";
+
+  const positionClasses = [
+    "position-top-right",
+    "position-top-left",
+    "position-bottom-right",
+    "position-bottom-left",
+    "position-top-center",
+    "position-bottom-center",
+    "position-center",
+  ];
 
   imageGrid.querySelectorAll(".image-card").forEach((card) => {
     card.classList.toggle("badge-dark", style === "dark");
     card.classList.toggle("badge-plain", style === "plain");
+
+    positionClasses.forEach((className) => card.classList.remove(className));
+    card.classList.add(`position-${position}`);
+
     card.style.setProperty("--badge-font-size", `${size}px`);
     card.style.setProperty("--badge-padding", `${padding}px`);
   });
@@ -222,11 +285,20 @@ function updateButtons() {
   orderMode.textContent = state.currentOrderMode;
   statusPill.textContent = hasImages
     ? `${state.images.length} image${state.images.length === 1 ? "" : "s"} ready`
-    : "Waiting for upload";
+    : "Waiting";
+
+  if (mobileStatusText) {
+    mobileStatusText.textContent = hasImages
+      ? `${state.images.length} image${state.images.length === 1 ? "" : "s"} ready • ${state.currentOrderMode} order`
+      : "Ready to upload";
+  }
 
   sortBtn.disabled = !hasImages;
   clearBtn.disabled = !hasImages;
   downloadBtn.disabled = !hasImages;
+
+  if (mobileSortBtn) mobileSortBtn.disabled = !hasImages;
+  if (mobileDownloadBtn) mobileDownloadBtn.disabled = !hasImages;
 }
 
 function updateRangeLabels() {
@@ -234,6 +306,11 @@ function updateRangeLabels() {
 }
 
 function handleDragStart(event) {
+  if (event.target.closest(".delete-image-btn, .move-btn")) {
+    event.preventDefault();
+    return;
+  }
+
   const card = event.currentTarget;
   state.draggedId = card.dataset.id;
   card.classList.add("dragging");
@@ -272,6 +349,36 @@ function handleDrop(event) {
   render();
 }
 
+
+
+function moveImage(fromIndex, toIndex) {
+  if (toIndex < 0 || toIndex >= state.images.length) return;
+
+  const [movedImage] = state.images.splice(fromIndex, 1);
+  state.images.splice(toIndex, 0, movedImage);
+  state.currentOrderMode = "Manual";
+  render();
+}
+
+function removeImage(imageId) {
+  const index = state.images.findIndex((image) => image.id === imageId);
+
+  if (index === -1) return;
+
+  const [removedImage] = state.images.splice(index, 1);
+
+  if (removedImage?.previewUrl) {
+    URL.revokeObjectURL(removedImage.previewUrl);
+  }
+
+  if (!state.images.length) {
+    state.currentOrderMode = "Auto";
+  }
+
+  render();
+  showToast("Image removed.");
+}
+
 async function downloadZip() {
   if (!state.images.length) return;
 
@@ -283,6 +390,7 @@ async function downloadZip() {
   showProgress(true, "Preparing images...", 0);
 
   try {
+    await ensureFontsReady();
     const zip = new JSZip();
 
     for (let index = 0; index < state.images.length; index++) {
@@ -348,8 +456,21 @@ async function createNumberedImageBlob(file, pageNumberText) {
 
   const boxWidth = textWidth + Math.round(fontSize * 0.78);
   const boxHeight = fontSize + Math.round(fontSize * 0.52);
-  const x = canvas.width - boxWidth - padding;
-  const y = padding;
+  const position = numberPosition?.value || "top-right";
+  const drawPosition = getCanvasBadgePosition({
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    boxWidth,
+    boxHeight,
+    textWidth,
+    fontSize,
+    padding,
+    position,
+    style,
+  });
+
+  const x = drawPosition.x;
+  const y = drawPosition.y;
 
   if (style !== "plain") {
     drawRoundRect(context, x, y, boxWidth, boxHeight, Math.max(6, fontSize * 0.48));
@@ -365,7 +486,7 @@ async function createNumberedImageBlob(file, pageNumberText) {
     context.shadowColor = "rgba(0, 0, 0, 0.75)";
     context.shadowBlur = 8;
     context.shadowOffsetY = 2;
-    context.fillText(text, canvas.width - textWidth - padding, y);
+    context.fillText(text, x, y);
     context.shadowBlur = 0;
     context.shadowOffsetY = 0;
   } else {
@@ -380,6 +501,57 @@ async function createNumberedImageBlob(file, pageNumberText) {
   const quality = outputType === "image/jpeg" ? 0.93 : undefined;
 
   return await canvasToBlob(canvas, outputType, quality);
+}
+
+
+
+function getCanvasBadgePosition({
+  canvasWidth,
+  canvasHeight,
+  boxWidth,
+  boxHeight,
+  textWidth,
+  fontSize,
+  padding,
+  position,
+  style,
+}) {
+  const plainHeight = fontSize;
+  const width = style === "plain" ? textWidth : boxWidth;
+  const height = style === "plain" ? plainHeight : boxHeight;
+
+  const positions = {
+    "top-right": {
+      x: canvasWidth - width - padding,
+      y: padding,
+    },
+    "top-left": {
+      x: padding,
+      y: padding,
+    },
+    "bottom-right": {
+      x: canvasWidth - width - padding,
+      y: canvasHeight - height - padding,
+    },
+    "bottom-left": {
+      x: padding,
+      y: canvasHeight - height - padding,
+    },
+    "top-center": {
+      x: (canvasWidth - width) / 2,
+      y: padding,
+    },
+    "bottom-center": {
+      x: (canvasWidth - width) / 2,
+      y: canvasHeight - height - padding,
+    },
+    "center": {
+      x: (canvasWidth - width) / 2,
+      y: (canvasHeight - height) / 2,
+    },
+  };
+
+  return positions[position] || positions["top-right"];
 }
 
 function loadImage(file) {
@@ -508,4 +680,23 @@ function loadSavedTheme() {
 
   document.documentElement.dataset.theme = theme;
   themeLabel.textContent = theme === "dark" ? "Dark" : "Light";
+}
+
+
+function createId() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return window.crypto.randomUUID();
+  }
+
+  return `img_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+async function ensureFontsReady() {
+  if (document.fonts && typeof document.fonts.ready?.then === "function") {
+    try {
+      await document.fonts.ready;
+    } catch (error) {
+      console.warn("Font loading check failed. Export will continue.", error);
+    }
+  }
 }
