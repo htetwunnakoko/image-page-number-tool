@@ -1,136 +1,223 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Page Number ZIP Tool</title>
+  <title>Image Page Number Studio</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <main class="app">
-    <section class="hero">
-      <div>
-        <p class="eyebrow">HTML • CSS • JavaScript</p>
-        <h1>Image Page Number ZIP Tool</h1>
-        <p class="subtitle">
-          Upload multiple images, auto-sort them naturally by filename, reorder by hand,
-          add small page numbers at the top-right corner, then download all images as a ZIP file.
-        </p>
-      </div>
+  <div class="bg-orb orb-one"></div>
+  <div class="bg-orb orb-two"></div>
 
-      <div class="hero-card">
-        <span class="status-dot"></span>
+  <main class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">PN</div>
         <div>
-          <strong>Client-side only</strong>
-          <p>Your images are processed inside your browser. No server upload required.</p>
+          <p class="eyebrow">Image Tool</p>
+          <h1>Page Number Studio</h1>
         </div>
       </div>
-    </section>
 
-    <section class="panel uploader-panel">
-      <label id="dropZone" class="drop-zone" for="imageInput">
-        <input
-          id="imageInput"
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          multiple
-          hidden
-        />
-        <span class="upload-icon">⬆</span>
-        <strong>Click to upload images</strong>
-        <small>or drag and drop PNG, JPG, JPEG, WEBP files here</small>
-      </label>
+      <p class="brand-text">
+        Upload images, sort naturally, reorder manually, add page numbers,
+        and export clean numbered images as a ZIP file.
+      </p>
 
-      <div class="toolbar">
-        <div class="stats">
-          <span id="imageCount">0 images</span>
-          <span id="sortStatus">Natural sort ready</span>
-        </div>
-
-        <div class="actions">
-          <button id="sortBtn" class="btn btn-secondary" type="button" disabled>
-            Natural Sort
-          </button>
-          <button id="clearBtn" class="btn btn-ghost" type="button" disabled>
-            Clear
-          </button>
-          <button id="downloadBtn" class="btn btn-primary" type="button" disabled>
-            Download ZIP
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section class="settings-grid">
-      <div class="panel setting-card">
-        <label for="startNumber">Start page number</label>
-        <input id="startNumber" type="number" min="0" value="1" />
-      </div>
-
-      <div class="panel setting-card">
-        <label for="numberLanguage">Page number language</label>
-        <select id="numberLanguage">
-          <option value="english">English numbers</option>
-          <option value="myanmar">မြန်မာ ဂဏန်း</option>
-        </select>
-      </div>
-
-      <div class="panel setting-card">
-        <label for="fontSize">Number size</label>
-        <input id="fontSize" type="range" min="10" max="42" value="18" />
-        <span><output id="fontSizeLabel">18</output> px</span>
-      </div>
-
-      <div class="panel setting-card">
-        <label for="paddingSize">Corner padding</label>
-        <input id="paddingSize" type="range" min="4" max="50" value="14" />
-        <span><output id="paddingSizeLabel">14</output> px</span>
-      </div>
-
-      <div class="panel setting-card">
-        <label for="zipName">ZIP file name</label>
-        <input id="zipName" type="text" value="numbered-images.zip" />
-      </div>
-    </section>
-
-    <section class="panel preview-panel">
-      <div class="preview-header">
+      <div class="mini-stats">
         <div>
-          <h2>Preview</h2>
-          <p>Drag cards to reorder. Page numbers will update automatically.</p>
+          <strong id="totalImages">0</strong>
+          <span>Images</span>
         </div>
-        <span class="hint">Natural order: 1, 2, 3, 10, 11</span>
+        <div>
+          <strong id="orderMode">Auto</strong>
+          <span>Order</span>
+        </div>
       </div>
 
-      <div id="emptyState" class="empty-state">
-        <div class="empty-icon">🖼️</div>
-        <h3>No images uploaded yet</h3>
-        <p>Upload one or more images to start numbering.</p>
-      </div>
+      <section class="settings-card">
+        <div class="section-title">
+          <span>01</span>
+          <h2>Number Settings</h2>
+        </div>
 
-      <div id="imageGrid" class="image-grid" aria-live="polite"></div>
+        <label class="field">
+          <span>Number language</span>
+          <select id="numberLanguage">
+            <option value="english">English numbers</option>
+            <option value="myanmar">မြန်မာ ဂဏန်း</option>
+          </select>
+        </label>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>Start number</span>
+            <input id="startNumber" type="number" min="0" value="1" />
+          </label>
+
+          <label class="field">
+            <span>Corner padding</span>
+            <input id="paddingSize" type="number" min="0" max="200" value="14" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Number size <b><output id="fontSizeLabel">18</output>px</b></span>
+          <input id="fontSize" type="range" min="10" max="54" value="18" />
+        </label>
+
+        <label class="field">
+          <span>Badge style</span>
+          <select id="badgeStyle">
+            <option value="pill">Soft white pill</option>
+            <option value="dark">Dark pill</option>
+            <option value="plain">Plain text only</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="settings-card">
+        <div class="section-title">
+          <span>02</span>
+          <h2>Export</h2>
+        </div>
+
+        <label class="field">
+          <span>ZIP file name</span>
+          <input id="zipName" type="text" value="numbered-images.zip" />
+        </label>
+
+        <button id="downloadBtn" class="btn btn-primary btn-block" type="button" disabled>
+          <span>Download ZIP</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 3a1 1 0 0 1 1 1v9.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Zm-7 15a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z" />
+          </svg>
+        </button>
+      </section>
+
+      <button id="themeBtn" class="theme-btn" type="button">
+        <span>Toggle theme</span>
+        <strong id="themeLabel">Dark</strong>
+      </button>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Client-side image numbering</p>
+          <h2>Upload, organise, preview, export.</h2>
+        </div>
+
+        <div class="top-actions">
+          <button id="sortBtn" class="btn btn-soft" type="button" disabled>Natural Sort</button>
+          <button id="clearBtn" class="btn btn-danger" type="button" disabled>Clear</button>
+        </div>
+      </header>
+
+      <section id="dropZone" class="drop-zone">
+        <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden />
+
+        <div class="drop-content">
+          <div class="upload-visual">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3 7.5 7.5a1 1 0 0 0 1.42 1.42L11 6.83V16a1 1 0 1 0 2 0V6.83l2.08 2.09a1 1 0 0 0 1.42-1.42L12 3ZM5 15a1 1 0 0 1 1 1v3h12v-3a1 1 0 1 1 2 0v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z" />
+            </svg>
+          </div>
+          <div>
+            <h3>Drop images here</h3>
+            <p>or click to choose PNG, JPG, JPEG, WEBP files</p>
+          </div>
+        </div>
+
+        <button class="btn btn-upload" type="button">Choose Images</button>
+      </section>
+
+      <section class="info-strip">
+        <div>
+          <span class="dot green"></span>
+          <strong>Natural sorting</strong>
+          <p>1, 2, 3, 10, 11 order</p>
+        </div>
+        <div>
+          <span class="dot purple"></span>
+          <strong>Manual reorder</strong>
+          <p>Drag image cards</p>
+        </div>
+        <div>
+          <span class="dot blue"></span>
+          <strong>Private processing</strong>
+          <p>No server upload</p>
+        </div>
+      </section>
+
+      <section class="preview-panel">
+        <div class="preview-head">
+          <div>
+            <p class="eyebrow">Live Preview</p>
+            <h2>Numbered Images</h2>
+          </div>
+          <span id="statusPill" class="status-pill">Waiting for upload</span>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+          <div class="empty-art">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <h3>No images yet</h3>
+          <p>Upload one or more images. The app will sort them naturally by filename first.</p>
+        </div>
+
+        <div id="imageGrid" class="image-grid" aria-live="polite"></div>
+      </section>
     </section>
   </main>
 
   <template id="imageCardTemplate">
     <article class="image-card" draggable="true">
+      <div class="drag-handle" title="Drag to reorder">
+        <span></span><span></span><span></span><span></span>
+      </div>
+
       <div class="image-wrap">
         <img alt="" />
         <span class="page-badge"></span>
       </div>
-      <div class="card-info">
-        <strong class="file-name"></strong>
-        <small class="file-meta"></small>
+
+      <div class="card-footer">
+        <div>
+          <strong class="file-name"></strong>
+          <small class="file-meta"></small>
+        </div>
+        <span class="order-number"></span>
       </div>
     </article>
   </template>
 
+  <div id="progressOverlay" class="progress-overlay" hidden>
+    <div class="progress-card">
+      <div class="spinner"></div>
+      <h3>Creating ZIP file</h3>
+      <p id="progressText">Preparing images...</p>
+      <div class="progress-bar">
+        <span id="progressBar"></span>
+      </div>
+    </div>
+  </div>
+
   <!--
-    JSZip is used only to create the ZIP file in the browser.
-    For offline use on Kali, download jszip.min.js and replace this CDN script with:
+    JSZip is used to create the ZIP file in the browser.
+    For fully offline use on Kali, download jszip.min.js and replace this CDN line with:
     <script src="vendor/jszip.min.js"></script>
   -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="app.js"></script>
 </body>
+
 </html>

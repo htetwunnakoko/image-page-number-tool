@@ -2,18 +2,29 @@ const imageInput = document.querySelector("#imageInput");
 const dropZone = document.querySelector("#dropZone");
 const imageGrid = document.querySelector("#imageGrid");
 const emptyState = document.querySelector("#emptyState");
-const imageCount = document.querySelector("#imageCount");
-const sortStatus = document.querySelector("#sortStatus");
+
+const totalImages = document.querySelector("#totalImages");
+const orderMode = document.querySelector("#orderMode");
+const statusPill = document.querySelector("#statusPill");
+
 const sortBtn = document.querySelector("#sortBtn");
 const clearBtn = document.querySelector("#clearBtn");
 const downloadBtn = document.querySelector("#downloadBtn");
+const themeBtn = document.querySelector("#themeBtn");
+const themeLabel = document.querySelector("#themeLabel");
+
 const startNumberInput = document.querySelector("#startNumber");
-const numberLanguageInput = document.querySelector("#numberLanguage");
 const fontSizeInput = document.querySelector("#fontSize");
 const fontSizeLabel = document.querySelector("#fontSizeLabel");
 const paddingSizeInput = document.querySelector("#paddingSize");
-const paddingSizeLabel = document.querySelector("#paddingSizeLabel");
+const numberLanguage = document.querySelector("#numberLanguage");
+const badgeStyle = document.querySelector("#badgeStyle");
 const zipNameInput = document.querySelector("#zipName");
+
+const progressOverlay = document.querySelector("#progressOverlay");
+const progressText = document.querySelector("#progressText");
+const progressBar = document.querySelector("#progressBar");
+
 const template = document.querySelector("#imageCardTemplate");
 
 const naturalCollator = new Intl.Collator(undefined, {
@@ -21,16 +32,24 @@ const naturalCollator = new Intl.Collator(undefined, {
   sensitivity: "base",
 });
 
+const myanmarDigits = ["၀", "၁", "၂", "၃", "၄", "၅", "၆", "၇", "၈", "၉"];
+const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
+
 const state = {
   images: [],
   draggedId: null,
+  currentOrderMode: "Auto",
 };
-
-const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 imageInput.addEventListener("change", (event) => {
   handleFiles(event.target.files);
   imageInput.value = "";
+});
+
+dropZone.addEventListener("click", (event) => {
+  if (event.target.closest(".btn-upload") || event.currentTarget === dropZone) {
+    imageInput.click();
+  }
 });
 
 dropZone.addEventListener("dragover", (event) => {
@@ -50,6 +69,7 @@ dropZone.addEventListener("drop", (event) => {
 
 sortBtn.addEventListener("click", () => {
   naturalSortImages();
+  state.currentOrderMode = "Auto";
   render();
   showToast("Images sorted naturally by filename.");
 });
@@ -57,6 +77,7 @@ sortBtn.addEventListener("click", () => {
 clearBtn.addEventListener("click", () => {
   revokePreviewUrls();
   state.images = [];
+  state.currentOrderMode = "Auto";
   render();
   showToast("All images cleared.");
 });
@@ -65,12 +86,24 @@ downloadBtn.addEventListener("click", async () => {
   await downloadZip();
 });
 
-[startNumberInput, numberLanguageInput, fontSizeInput, paddingSizeInput].forEach((input) => {
+themeBtn.addEventListener("click", () => {
+  const html = document.documentElement;
+  const nextTheme = html.dataset.theme === "dark" ? "light" : "dark";
+  html.dataset.theme = nextTheme;
+  themeLabel.textContent = nextTheme === "dark" ? "Dark" : "Light";
+  localStorage.setItem("pageNumberStudioTheme", nextTheme);
+});
+
+[startNumberInput, fontSizeInput, paddingSizeInput, numberLanguage, badgeStyle].forEach((input) => {
   input.addEventListener("input", () => {
     updateRangeLabels();
     renderPageNumbers();
+    applyBadgeStyles();
   });
 });
+
+loadSavedTheme();
+render();
 
 function handleFiles(fileList) {
   const files = Array.from(fileList || []);
@@ -81,6 +114,7 @@ function handleFiles(fileList) {
     return;
   }
 
+  const skippedCount = files.length - validFiles.length;
   const newImages = validFiles.map((file) => ({
     id: crypto.randomUUID(),
     file,
@@ -92,13 +126,18 @@ function handleFiles(fileList) {
 
   state.images.push(...newImages);
   naturalSortImages();
+  state.currentOrderMode = "Auto";
   render();
-  showToast(`${newImages.length} image(s) uploaded and naturally sorted.`);
+
+  const message = skippedCount > 0
+    ? `${newImages.length} image(s) uploaded. ${skippedCount} unsupported file(s) skipped.`
+    : `${newImages.length} image(s) uploaded and naturally sorted.`;
+
+  showToast(message, skippedCount > 0 ? "error" : "success");
 }
 
 function naturalSortImages() {
   state.images.sort((a, b) => naturalCollator.compare(a.name, b.name));
-  sortStatus.textContent = "Sorted by natural filename order";
 }
 
 function render() {
@@ -111,13 +150,15 @@ function render() {
     const badge = card.querySelector(".page-badge");
     const fileName = card.querySelector(".file-name");
     const fileMeta = card.querySelector(".file-meta");
+    const orderNumber = card.querySelector(".order-number");
 
     card.dataset.id = image.id;
     img.src = image.previewUrl;
     img.alt = image.name;
-    badge.textContent = formatPageNumber(getPageNumber(index));
+    badge.textContent = getDisplayPageNumber(index);
     fileName.textContent = image.name;
     fileMeta.textContent = `${formatBytes(image.size)} • ${image.type.replace("image/", "").toUpperCase()}`;
+    orderNumber.textContent = `#${index + 1}`;
 
     card.addEventListener("dragstart", handleDragStart);
     card.addEventListener("dragend", handleDragEnd);
@@ -129,12 +170,33 @@ function render() {
 
   updateButtons();
   updateRangeLabels();
+  applyBadgeStyles();
 }
 
 function renderPageNumbers() {
-  const badges = imageGrid.querySelectorAll(".page-badge");
-  badges.forEach((badge, index) => {
-    badge.textContent = formatPageNumber(getPageNumber(index));
+  const cards = imageGrid.querySelectorAll(".image-card");
+
+  cards.forEach((card, index) => {
+    const badge = card.querySelector(".page-badge");
+    const orderNumber = card.querySelector(".order-number");
+
+    badge.textContent = getDisplayPageNumber(index);
+    orderNumber.textContent = `#${index + 1}`;
+  });
+
+  updateButtons();
+}
+
+function applyBadgeStyles() {
+  const size = Number.parseInt(fontSizeInput.value, 10) || 18;
+  const padding = Number.parseInt(paddingSizeInput.value, 10) || 14;
+  const style = badgeStyle.value;
+
+  imageGrid.querySelectorAll(".image-card").forEach((card) => {
+    card.classList.toggle("badge-dark", style === "dark");
+    card.classList.toggle("badge-plain", style === "plain");
+    card.style.setProperty("--badge-font-size", `${size}px`);
+    card.style.setProperty("--badge-padding", `${padding}px`);
   });
 }
 
@@ -144,22 +206,24 @@ function getPageNumber(index) {
   return safeStart + index;
 }
 
-function formatPageNumber(number) {
-  const englishNumber = String(number);
+function getDisplayPageNumber(index) {
+  const number = getPageNumber(index);
+  return numberLanguage.value === "myanmar" ? toMyanmarNumber(number) : String(number);
+}
 
-  if (numberLanguageInput.value !== "myanmar") {
-    return englishNumber;
-  }
-
-  return englishNumber.replace(/[0-9]/g, (digit) => {
-    const myanmarDigits = ["၀", "၁", "၂", "၃", "၄", "၅", "၆", "၇", "၈", "၉"];
-    return myanmarDigits[Number(digit)];
-  });
+function toMyanmarNumber(value) {
+  return String(value).replace(/\d/g, (digit) => myanmarDigits[Number(digit)]);
 }
 
 function updateButtons() {
   const hasImages = state.images.length > 0;
-  imageCount.textContent = `${state.images.length} image${state.images.length === 1 ? "" : "s"}`;
+
+  totalImages.textContent = state.images.length;
+  orderMode.textContent = state.currentOrderMode;
+  statusPill.textContent = hasImages
+    ? `${state.images.length} image${state.images.length === 1 ? "" : "s"} ready`
+    : "Waiting for upload";
+
   sortBtn.disabled = !hasImages;
   clearBtn.disabled = !hasImages;
   downloadBtn.disabled = !hasImages;
@@ -167,7 +231,6 @@ function updateButtons() {
 
 function updateRangeLabels() {
   fontSizeLabel.value = fontSizeInput.value;
-  paddingSizeLabel.value = paddingSizeInput.value;
 }
 
 function handleDragStart(event) {
@@ -205,7 +268,7 @@ function handleDrop(event) {
   const [movedImage] = state.images.splice(sourceIndex, 1);
   state.images.splice(targetIndex, 0, movedImage);
 
-  sortStatus.textContent = "Manual order active";
+  state.currentOrderMode = "Manual";
   render();
 }
 
@@ -213,39 +276,52 @@ async function downloadZip() {
   if (!state.images.length) return;
 
   if (!window.JSZip) {
-    showToast("JSZip is not loaded. Check your internet or use local jszip.min.js.", "error");
+    showToast("JSZip is not loaded. Check your internet connection or use local jszip.min.js.", "error");
     return;
   }
 
-  document.body.classList.add("processing");
-  downloadBtn.textContent = "Creating ZIP...";
+  showProgress(true, "Preparing images...", 0);
 
   try {
     const zip = new JSZip();
 
     for (let index = 0; index < state.images.length; index++) {
       const image = state.images[index];
-      const pageNumber = getPageNumber(index);
+      const pageNumber = getDisplayPageNumber(index);
+
+      showProgress(
+        true,
+        `Processing ${index + 1} of ${state.images.length}: ${image.name}`,
+        Math.round((index / state.images.length) * 80)
+      );
+
       const blob = await createNumberedImageBlob(image.file, pageNumber);
       const filename = createOutputFileName(index, image.name, image.type);
 
       zip.file(filename, blob);
     }
 
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    const zipFileName = normaliseZipName(zipNameInput.value);
-    triggerDownload(zipBlob, zipFileName);
+    showProgress(true, "Compressing ZIP file...", 88);
+
+    const zipBlob = await zip.generateAsync(
+      { type: "blob" },
+      (metadata) => {
+        const zipProgress = 88 + Math.round(metadata.percent * 0.12);
+        showProgress(true, "Compressing ZIP file...", Math.min(100, zipProgress));
+      }
+    );
+
+    triggerDownload(zipBlob, normaliseZipName(zipNameInput.value));
     showToast("ZIP file created successfully.");
   } catch (error) {
     console.error(error);
     showToast("Something went wrong while creating the ZIP file.", "error");
   } finally {
-    document.body.classList.remove("processing");
-    downloadBtn.textContent = "Download ZIP";
+    showProgress(false);
   }
 }
 
-async function createNumberedImageBlob(file, pageNumber) {
+async function createNumberedImageBlob(file, pageNumberText) {
   const image = await loadImage(file);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
@@ -257,31 +333,51 @@ async function createNumberedImageBlob(file, pageNumber) {
 
   const fontSize = Number.parseInt(fontSizeInput.value, 10) || 18;
   const padding = Number.parseInt(paddingSizeInput.value, 10) || 14;
-  const text = formatPageNumber(pageNumber);
+  const style = badgeStyle.value;
 
-  context.font = `700 ${fontSize}px "Noto Sans Myanmar", "Myanmar Text", Padauk, Arial, sans-serif`;
+  const fontFamily = numberLanguage.value === "myanmar"
+    ? '"Noto Sans Myanmar", "Myanmar Text", Padauk, Arial, sans-serif'
+    : "Arial, sans-serif";
+
+  context.font = `800 ${fontSize}px ${fontFamily}`;
   context.textBaseline = "top";
 
+  const text = String(pageNumberText);
   const metrics = context.measureText(text);
-  const boxWidth = metrics.width + Math.round(fontSize * 0.75);
-  const boxHeight = fontSize + Math.round(fontSize * 0.45);
+  const textWidth = metrics.width;
 
+  const boxWidth = textWidth + Math.round(fontSize * 0.78);
+  const boxHeight = fontSize + Math.round(fontSize * 0.52);
   const x = canvas.width - boxWidth - padding;
   const y = padding;
 
-  drawRoundRect(context, x, y, boxWidth, boxHeight, Math.max(6, fontSize * 0.45));
-  context.fillStyle = "rgba(255, 255, 255, 0.88)";
-  context.fill();
+  if (style !== "plain") {
+    drawRoundRect(context, x, y, boxWidth, boxHeight, Math.max(6, fontSize * 0.48));
+    context.fillStyle = style === "dark"
+      ? "rgba(15, 23, 42, 0.86)"
+      : "rgba(255, 255, 255, 0.90)";
+    context.fill();
+  }
 
-  context.fillStyle = "#111827";
-  context.fillText(
-    text,
-    x + (boxWidth - metrics.width) / 2,
-    y + Math.round(fontSize * 0.19)
-  );
+  context.fillStyle = style === "dark" || style === "plain" ? "#ffffff" : "#111827";
+
+  if (style === "plain") {
+    context.shadowColor = "rgba(0, 0, 0, 0.75)";
+    context.shadowBlur = 8;
+    context.shadowOffsetY = 2;
+    context.fillText(text, canvas.width - textWidth - padding, y);
+    context.shadowBlur = 0;
+    context.shadowOffsetY = 0;
+  } else {
+    context.fillText(
+      text,
+      x + (boxWidth - textWidth) / 2,
+      y + Math.round(fontSize * 0.21)
+    );
+  }
 
   const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
-  const quality = outputType === "image/jpeg" ? 0.92 : undefined;
+  const quality = outputType === "image/jpeg" ? 0.93 : undefined;
 
   return await canvasToBlob(canvas, outputType, quality);
 }
@@ -364,6 +460,19 @@ function triggerDownload(blob, fileName) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function showProgress(visible, text = "", percent = 0) {
+  progressOverlay.hidden = !visible;
+
+  if (!visible) {
+    progressBar.style.width = "0%";
+    progressText.textContent = "Preparing images...";
+    return;
+  }
+
+  progressText.textContent = text;
+  progressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+}
+
 function formatBytes(bytes) {
   if (bytes === 0) return "0 B";
 
@@ -390,5 +499,13 @@ function showToast(message, type = "success") {
 
   setTimeout(() => {
     toast.remove();
-  }, 3200);
+  }, 3400);
+}
+
+function loadSavedTheme() {
+  const savedTheme = localStorage.getItem("pageNumberStudioTheme");
+  const theme = savedTheme === "light" ? "light" : "dark";
+
+  document.documentElement.dataset.theme = theme;
+  themeLabel.textContent = theme === "dark" ? "Dark" : "Light";
 }
