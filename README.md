@@ -9,6 +9,7 @@ A professional single-page website built with HTML, CSS, and JavaScript.
   Example: `0, 1, 2, 3, 10, 11`
 - Manual drag-and-drop reordering
 - Small page number preview at the top-right corner
+- English or Myanmar page number mode
 - Output all numbered images as a ZIP file
 - Client-side processing only
 - Works on Kali Linux using a browser
@@ -80,5 +81,6 @@ In the website UI, you can change:
 
 - Start page number
 - Number size
+- Page number language: English or Myanmar
 - Top-right corner padding
 - ZIP file name

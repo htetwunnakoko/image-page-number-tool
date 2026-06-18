@@ -225,7 +225,7 @@ h1 {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 14px;
   margin: 16px 0;
 }
@@ -243,7 +243,8 @@ h1 {
 }
 
 .setting-card input[type="text"],
-.setting-card input[type="number"] {
+.setting-card input[type="number"],
+.setting-card select {
   width: 100%;
   min-height: 42px;
   padding: 0 12px;
@@ -252,6 +253,11 @@ h1 {
   outline: 0;
   color: var(--text);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.setting-card select {
+  appearance: none;
+  cursor: pointer;
 }
 
 .setting-card input[type="range"] {
@@ -362,6 +368,7 @@ h1 {
   color: #111827;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  font-family: "Noto Sans Myanmar", "Myanmar Text", Padauk, Arial, sans-serif;
   font-size: 0.78rem;
   font-weight: 900;
   line-height: 1;

@@ -8,6 +8,7 @@ const sortBtn = document.querySelector("#sortBtn");
 const clearBtn = document.querySelector("#clearBtn");
 const downloadBtn = document.querySelector("#downloadBtn");
 const startNumberInput = document.querySelector("#startNumber");
+const numberLanguageInput = document.querySelector("#numberLanguage");
 const fontSizeInput = document.querySelector("#fontSize");
 const fontSizeLabel = document.querySelector("#fontSizeLabel");
 const paddingSizeInput = document.querySelector("#paddingSize");
@@ -64,7 +65,7 @@ downloadBtn.addEventListener("click", async () => {
   await downloadZip();
 });
 
-[startNumberInput, fontSizeInput, paddingSizeInput].forEach((input) => {
+[startNumberInput, numberLanguageInput, fontSizeInput, paddingSizeInput].forEach((input) => {
   input.addEventListener("input", () => {
     updateRangeLabels();
     renderPageNumbers();
@@ -114,7 +115,7 @@ function render() {
     card.dataset.id = image.id;
     img.src = image.previewUrl;
     img.alt = image.name;
-    badge.textContent = getPageNumber(index);
+    badge.textContent = formatPageNumber(getPageNumber(index));
     fileName.textContent = image.name;
     fileMeta.textContent = `${formatBytes(image.size)} • ${image.type.replace("image/", "").toUpperCase()}`;
 
@@ -133,7 +134,7 @@ function render() {
 function renderPageNumbers() {
   const badges = imageGrid.querySelectorAll(".page-badge");
   badges.forEach((badge, index) => {
-    badge.textContent = getPageNumber(index);
+    badge.textContent = formatPageNumber(getPageNumber(index));
   });
 }
 
@@ -141,6 +142,19 @@ function getPageNumber(index) {
   const startNumber = Number.parseInt(startNumberInput.value, 10);
   const safeStart = Number.isFinite(startNumber) ? startNumber : 1;
   return safeStart + index;
+}
+
+function formatPageNumber(number) {
+  const englishNumber = String(number);
+
+  if (numberLanguageInput.value !== "myanmar") {
+    return englishNumber;
+  }
+
+  return englishNumber.replace(/[0-9]/g, (digit) => {
+    const myanmarDigits = ["၀", "၁", "၂", "၃", "၄", "၅", "၆", "၇", "၈", "၉"];
+    return myanmarDigits[Number(digit)];
+  });
 }
 
 function updateButtons() {
@@ -243,9 +257,9 @@ async function createNumberedImageBlob(file, pageNumber) {
 
   const fontSize = Number.parseInt(fontSizeInput.value, 10) || 18;
   const padding = Number.parseInt(paddingSizeInput.value, 10) || 14;
-  const text = String(pageNumber);
+  const text = formatPageNumber(pageNumber);
 
-  context.font = `700 ${fontSize}px Arial, sans-serif`;
+  context.font = `700 ${fontSize}px "Noto Sans Myanmar", "Myanmar Text", Padauk, Arial, sans-serif`;
   context.textBaseline = "top";
 
   const metrics = context.measureText(text);
